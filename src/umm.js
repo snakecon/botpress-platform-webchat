@@ -1,7 +1,8 @@
 import util from 'util'
 import _ from 'lodash'
 import Promise from 'bluebird'
-
+import path from 'path'
+import mime from 'mime'
 
 const QUICK_REPLY_PAYLOAD = /\<(.+)\>\s(.+)/i
 
@@ -14,7 +15,7 @@ function processQuickReplies(qrs, blocName) {
   return qrs.map(qr => {
     if (_.isString(qr) && QUICK_REPLY_PAYLOAD.test(qr)) {
       let [, payload, text] = QUICK_REPLY_PAYLOAD.exec(qr)
-      
+
       // <.HELLO> becomes <BLOCNAME.HELLO>
       if (payload.startsWith('.')) {
         payload = blocName + payload
@@ -30,13 +31,96 @@ function processQuickReplies(qrs, blocName) {
   })
 }
 
+function loginPrompt(event, instruction, options) {
+  const user = getUserId(event)
+
+  const raw = Object.assign(
+    {
+      to: user,
+      message: instruction.text
+    },
+    options,
+    _.pick(event && event.raw, 'conversationId')
+  )
+
+  return PromisifyEvent({
+    platform: 'webchat',
+    type: 'login_prompt',
+    user: { id: user },
+    raw: raw,
+    text: instruction.text
+  })
+}
+
+// - type: file
+//   url: "https://exemple.com"
+
+function uploadFile(event, instruction, options) {
+  const user = getUserId(event)
+
+  const url = instruction.url
+
+  let extension = path.extname(url)
+
+  let mimeType = mime.getType(extension)
+
+  let basename = path.basename(url, extension)
+
+  const raw = Object.assign(
+    {
+      to: user,
+      message: basename
+    },
+    options,
+    _.pick(event && event.raw, 'conversationId')
+  )
+
+  return PromisifyEvent({
+    platform: 'webchat',
+    type: 'file',
+    user: { id: user },
+    raw: raw,
+    text: instruction.text || basename,
+    data: {
+      storage: 'remote',
+      url: instruction.url,
+      name: basename || 'unknown',
+      mime: mimeType || 'unknown'
+    }
+  })
+}
+
+function defaultText(event, instruction, options) {
+  if (!_.isNil(instruction.text)) {
+    const user = getUserId(event)
+
+    const raw = Object.assign(
+      {
+        to: user,
+        message: instruction.text
+      },
+      options,
+      _.pick(event && event.raw, 'conversationId')
+    )
+
+    return PromisifyEvent({
+      platform: 'webchat',
+      type: 'text',
+      user: { id: user },
+      raw: raw,
+      text: instruction.text
+    })
+  }
+}
+
 function getUserId(event) {
-  const userId = _.get(event, 'user.id')
-    || _.get(event, 'user.userId')
-    || _.get(event, 'userId')
-    || _.get(event, 'raw.from')
-    || _.get(event, 'raw.userId')
-    || _.get(event, 'raw.user.id')
+  const userId =
+    _.get(event, 'user.id') ||
+    _.get(event, 'user.userId') ||
+    _.get(event, 'userId') ||
+    _.get(event, 'raw.from') ||
+    _.get(event, 'raw.userId') ||
+    _.get(event, 'raw.user.id')
 
   if (!userId) {
     throw new Error('Could not find userId in the incoming event.')
@@ -62,11 +146,11 @@ function processOutgoing({ event, blocName, instruction }) {
   ////////
   // PRE-PROCESSING
   ////////
-  
-  const optionsList = ['typing', 'quick_replies']
+
+  const optionsList = ['typing', 'quick_replies', 'file']
 
   const options = _.pick(instruction, optionsList)
-  
+
   for (let prop of optionsList) {
     delete ins[prop]
   }
@@ -78,45 +162,24 @@ function processOutgoing({ event, blocName, instruction }) {
   /////////
   /// Processing
   /////////
-
-  if (instruction.type === 'login_prompt') {
-    const user = getUserId(event)
-
-    const raw = Object.assign({
-      to: user,
-      message: instruction.text
-    }, options, _.pick(event && event.raw, 'conversationId'))
-
-    return PromisifyEvent({
-      platform: 'webchat',
-      type: 'login_prompt',
-      user: { id: user },
-      raw: raw,
-      text: instruction.text
-    })
-  }
-
-  if (!_.isNil(instruction.text)) {
-    const user = getUserId(event)
-
-    const raw = Object.assign({
-      to: user,
-      message: instruction.text
-    }, options, _.pick(event && event.raw, 'conversationId'))
-
-    return PromisifyEvent({
-      platform: 'webchat',
-      type: 'text',
-      user: { id: user },
-      raw: raw,
-      text: instruction.text
-    })
+  switch (instruction.type) {
+    case 'login_prompt':
+      return loginPrompt(event, instruction, options)
+      break
+    case 'file':
+      return uploadFile(event, instruction, options)
+      break
+    case 'location_picker': //TODO : SOON
+      // code_block
+      break
+    default:
+      return defaultText(event, instruction, options)
   }
 
   ////////////
   /// POST-PROCESSING
   ////////////
-  
+
   // Nothing to post-process yet
 
   ////////////
@@ -125,7 +188,6 @@ function processOutgoing({ event, blocName, instruction }) {
 
   const strRep = util.inspect(instruction, false, 1)
   throw new Error(`Unrecognized instruction on Web in bloc '${blocName}': ${strRep}`)
-
 }
 
 ////////////
@@ -139,9 +201,11 @@ function getTemplates() {
 module.exports = bp => {
   const [umm, registerConnector] = _.at(bp, ['umm', 'umm.registerConnector'])
 
-  umm && registerConnector && registerConnector({
-    platform: 'webchat',
-    processOutgoing: args => processOutgoing(Object.assign({}, args, { bp })),
-    templates: getTemplates()
-  })
+  umm &&
+    registerConnector &&
+    registerConnector({
+      platform: 'webchat',
+      processOutgoing: args => processOutgoing(Object.assign({}, args, { bp })),
+      templates: getTemplates()
+    })
 }
