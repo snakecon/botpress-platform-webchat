@@ -161,9 +161,12 @@ function processOutgoing({ event, blocName, instruction }) {
     options.quick_replies = processQuickReplies(options.quick_replies, blocName)
   }
 
+  // TODO : Make a Quick_replies than handle text and picture.
+
   /////////
   /// Processing
   /////////
+
   switch (instruction.type) {
     case 'login_prompt':
       return loginPrompt(event, instruction, options)
@@ -175,7 +178,10 @@ function processOutgoing({ event, blocName, instruction }) {
       // code_block
       break
     default:
-      return defaultText(event, instruction, options)
+      const text = defaultText(event, instruction, options)
+      if (text) {
+        return text
+      }
   }
 
   ////////////
