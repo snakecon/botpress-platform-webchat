@@ -57,8 +57,10 @@ function loginPrompt(event, instruction, options) {
 
 function uploadFile(event, instruction, options) {
   const user = getUserId(event)
+  let url = instruction.url
 
-  const url = instruction.url
+  // if you are working on the same url
+  // you can let absolute path for your image
 
   let extension = path.extname(url)
 
@@ -83,7 +85,7 @@ function uploadFile(event, instruction, options) {
     text: instruction.text || basename,
     data: {
       storage: 'remote',
-      url: instruction.url,
+      url: url,
       name: basename || 'unknown',
       mime: mimeType || 'unknown'
     }
