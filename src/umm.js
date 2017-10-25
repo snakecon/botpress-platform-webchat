@@ -201,9 +201,6 @@ function processOutgoing({ event, blocName, instruction }) {
     delete ins[prop]
   }
 
-  console.log(ins)
-  console.log(options)
-
   if (options.quick_replies) {
     options.quick_replies = processQuickReplies(options.quick_replies, blocName)
   }
