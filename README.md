@@ -11,6 +11,12 @@ Official Webchat connector module for [Botpress](http://github.com/botpress/botp
 ### Using NPM
 
 ```
+npm install botpress-platform-webchat
+```
+
+### Using Yarn 
+
+```bash
 yarn add botpress-platform-webchat
 ```
 
