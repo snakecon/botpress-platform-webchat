@@ -92,7 +92,7 @@ function defaultText(event, instruction, options) {
   }
 }
 
-// Build the event OBJ
+// Build the raw obj to pass to the Promise
 function buildObjectRaw(event, instruction, options, user) {
   const raw = Object.assign(
     {
