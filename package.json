@@ -12,7 +12,7 @@
     "plugins": [
       {
         "entry": "WebBotpressUIInjection",
-        "position": "overlay"
+        "position": "navbar-buttons"
       }
     ]
   },

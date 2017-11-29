@@ -162,30 +162,22 @@ export class WebBotpressUIInjection extends React.Component {
     if (document.getElementById(INJECTION_ID)) return
 
     const node = window.document.createElement('script')
-    node.src = INJECTION_URL
-    node.id = INJECTION_ID
+    node.setAttribute('src', INJECTION_URL)
+    node.setAttribute('id', INJECTION_ID)
     node.dataset.optionsJson = JSON.stringify({ hideWidget: true })
 
     window.document.body.appendChild(node)
-
-    const button = document.createElement('li')
-    Object.assign(button, {
-      role: 'presentation',
-      onclick: () => botpressChat('show'),
-      innerHTML: `
-        <a role="button" href="#">
-          <span class="bp-full-screen">
-            <span class="glyphicon glyphicon-comment"></span>
-          </span>
-        </a>
-      `
-    })
-
-    const target = document.querySelector('.bp-navbar-module-buttons') || document.querySelector('.nav.navbar-nav')
-    target.appendChild(button)
   }
 
   render() {
-    return null
+    return (
+      <li role="presentation" onClick={() => window.botpressChat('show')}>
+        <a role="button" href="#">
+          <span className="bp-full-screen">
+            <span className="glyphicon glyphicon-comment" />
+          </span>
+        </a>
+      </li>
+    )
   }
 }

@@ -1,6 +1,6 @@
 const injectDOMElement = (tagName, targetSelector, options = {}) => {
   let element = document.createElement(tagName)
-  Object.keys(options).forEach(key => element[key] = options[key])
+  Object.keys(options).forEach(key => (element[key] = options[key]))
   document.querySelector(targetSelector).appendChild(element)
   return element
 }
@@ -26,5 +26,5 @@ if (!document.querySelector('#bp-web-widget')) {
   const { optionsJson } = injectionScript ? injectionScript.dataset : { optionsJson: '{}' }
   iframeWindow.botpressChatOptions = Object.assign({}, JSON.parse(optionsJson))
 
-  window.botpressChat = (action) => iframeWindow.postMessage(action, '*')
+  window.botpressChat = action => iframeWindow.postMessage(action, '*')
 }
