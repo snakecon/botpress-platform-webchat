@@ -33,7 +33,6 @@ module.exports = async (bp, config) => {
       return next('Unsupported event type: ' + event.type)
     }
 
-
     let user = await getOrCreateUser(event.user.id)
 
     const typing = parseTyping(event)

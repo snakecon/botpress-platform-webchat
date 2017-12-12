@@ -6,7 +6,7 @@ const injectDOMElement = (tagName, targetSelector, options = {}) => {
 }
 
 const hostName = window.botpressSettings && window.botpressSettings.hostname
-const host = hostName ? `https://${hostName}` : ''
+const host = hostName ? `http://${hostName}` : ''
 
 window.addEventListener('message', ({ data }) => {
   if (!data || !data.type || data.type !== 'setClass') return
